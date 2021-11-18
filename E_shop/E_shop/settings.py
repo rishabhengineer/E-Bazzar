@@ -146,5 +146,5 @@ LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
 
 #razorpay
-RAZORPAY_API_KEY = 'rzp_test_x4CEKnaWCusNC3'
-RAZORPAY_API_SECRET_KEY = 'Rm13X360MYIq3LX9kBrcVzbM'
+RAZORPAY_API_KEY = '' #enter your razorpay_api_key
+RAZORPAY_API_SECRET_KEY = '' #enter your razorpay_api_secret_key
