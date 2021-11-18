@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 #add to cart
 from django.contrib.auth.decorators import login_required
 from cart.cart import Cart
+import razorpay
+from E_shop.settings import RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY
 
 
 def Master(request):
@@ -110,6 +112,7 @@ def contact_page(request):
     return render(request,'contact.html')
 
 #checkout
+client = razorpay.Client(auth=(RAZORPAY_API_KEY, RAZORPAY_API_SECRET_KEY))
 def Checkout(request):
     if request.method == 'POST':
         address = request.POST.get('address')
@@ -119,24 +122,33 @@ def Checkout(request):
         uid = request.session.get('_auth_user_id')
         user = User.objects.get(pk = uid)
 
+        request.session['address'] = address,
+        request.session['phone'] = phone,
+        request.session['pincode'] = pincode,
+
+
         for i in cart:
             a=int(cart[i]['price'])
             b=cart[i]['quantity']
             total=a*b
-            order = Order(
-                user = user,
-                product = cart[i]['name'],
-                price = cart[i]['price'],
-                quantity = cart[i]['quantity'],
-                image = cart[i]['image'],
-                address = address,
-                phone = phone,
-                pincode = pincode,
-                total = total,
-            )
-            order.save()
-            request.session['cart']={}
-        return redirect('index')
+
+        payment_order = client.order.create(dict(amount=total*100,currency="INR",payment_capture=1))
+        order_id = payment_order['id']
+
+        request.session['order_id'] = order_id
+
+        context = {
+            "address": address,
+            "phone": phone,
+            "pincode": pincode,
+            "cart": cart,
+            "uid": uid,
+            "user": user,
+            "amount":total,
+            "api_key":RAZORPAY_API_KEY,
+            "order_id":order_id
+        }
+        return render(request,'payment_view/payment.html',context)
     return HttpResponse('this is checkout page')
 
 #order
@@ -189,6 +201,56 @@ def Search(request):
         'product':product
     }
     return render(request,'search.html',context)
+
+#payment
+def payment(request):
+    """order = Order(
+        user=user,
+        product=cart[i]['name'],
+        price=cart[i]['price'],
+        quantity=cart[i]['quantity'],
+        image=cart[i]['image'],
+        address=address,
+        phone=phone,
+        pincode=pincode,
+        total=total,
+    )"""
+    request.session['cart'] = {}
+    return render(request,'payment_view/payment.html')
+
+#payment_success
+def payment_success(request):
+    address = request.session.get('address')
+    order_id = request.session.get('order_id')
+    phone = request.session.get('phone')
+    pincode = request.session.get('pincode')
+    cart = request.session.get('cart')
+    uid = request.session.get('_auth_user_id')
+    user = User.objects.get(pk=uid)
+
+    for i in cart:
+        a = int(cart[i]['price'])
+        b = cart[i]['quantity']
+        total = a * b
+
+    payment_id = request.POST.get('razorpay_payment_id', '')
+    order = Order(
+        user = user,
+        product=cart[i]['name'],
+        price=cart[i]['price'],
+        quantity=cart[i]['quantity'],
+        image=cart[i]['image'],
+        address = address,
+        phone = phone,
+        pincode = pincode,
+        order_id = order_id,
+        total=total,
+    )
+    order.save()
+    request.session['cart'] = {}
+    return render(request,'payment_view/payment_success.html')
+
+
 
 
 

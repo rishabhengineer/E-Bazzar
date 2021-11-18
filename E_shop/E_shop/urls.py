@@ -52,7 +52,13 @@ urlpatterns = [
     path('product_page/<str:id>',views.Product_Details,name='Product_Details'),
 
     #search
-    path('search/',views.Search,name='Search')
+    path('search/',views.Search,name='Search'),
+
+    #payment
+    path('payment/',views.payment,name='payment'),
+
+    #payment_success
+    path('payment_success/', views.payment_success, name='payment_success')
 
 ]+static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
 

@@ -96,6 +96,7 @@ class Order(models.Model):
     address = models.TextField()
     phone = models.CharField(max_length=10)
     pincode = models.CharField(max_length=10)
+    order_id = models.CharField(max_length=500,default='')
     date = models.DateField(default=datetime.datetime.today)
 
     def __str__(self):
